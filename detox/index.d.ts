@@ -283,10 +283,64 @@ declare global {
              */
             id: string;
             /**
-             * Holds a descriptive name of the device. Example: emulator-5554 (Pixel_API_26)
+             * Holds a descriptive name of the device. Example: emulator-5554 (Pixel_API_29)
              * The value will be undefined until the device is properly prepared (i.e. in detox.init()).
              */
             name: string;
+            /**
+             * Set a launch-argument (name & value) to bundle alongside launch-arguments specified in any future call to {@link launchApp}.
+             *
+             * Equivalent to {@link DeviceLaunchAppConfig#launchArgs}, but is set ahead-of-time rather than on-site - thus allowing for
+             * a gradual, multi-phased setup of a test environment, typically suitable for complex apps.
+             *
+             * @example
+             * // Even without launchArgs specified in call to launchApp() --
+             * // launch it with the value 'world' associated with 'hello':
+             * device.setLaunchArg('hello', 'world');
+             * await device.launchApp();
+             * @example
+             * // On-site arguments (specified in call to launchApp()) take precedence over arguments set using this method.
+             * // For example, here the tested app will be launched with the value of '222' associated with argument 'arg1',
+             * // rather than '111'.
+             * device.setLaunchArg('arg1', '111');
+             * await device.launchApp({ launchArgs: {'arg1': '222'} }};
+             *
+             * @param name Name of argument to provide.
+             * @param value Argument's value. `Undefined` can be used for clearing the argument completely.
+             *
+             * @see DeviceLaunchAppConfig#launchArgs
+             */
+            setLaunchArg(name: string, value: any): void;
+            /**
+             * Set multiple launch-arguments in one go. See {@link setLaunchArg}.
+             * @param launchArgs A **plain** object containing the argument to set. Specifying `undefined` will result
+             * in the clearing of the associated launch-argument.
+             *
+             * @example
+             * device.setLaunchArgs({
+             *   mockServerPort: 1234,
+             *   mockServerCredentials: 'user@test.com:12345678',
+             * });
+             * await device.launchApp();
+             * @example
+             * // Set one arg (mockServerPort) and clear another (mockServerToken) in one go:
+             * device.setLaunchArgs({
+             *   mockServerPort: 1234,
+             *   mockServerToken: undefined,
+             * });
+             * await device.launchApp();
+             */
+            setLaunchArgs(launchArgs: object): void;
+            /**
+             * Clear a launch-argument previously set using {@link setLaunchArg};
+             *
+             * @param name Name of the argument to clear.
+             */
+            clearLaunchArg(name: string): void;
+            /**
+             * Completely reset any previously set launch-arguments.
+             */
+            clearAllLaunchArgs(): void;
             /**
              * Launch the app
              *
@@ -300,6 +354,11 @@ declare global {
              * @example
              * // Mock opening the app from URL to test your app's deep link handling mechanism.
              * await device.launchApp({url: url});
+             * @example
+             * // Start the app with some custom arguments.
+             * await device.launchApp({
+             *   launchArgs: {arg1: 1, arg2: "2"},
+             * });
              */
             launchApp(config?: DeviceLaunchAppConfig): Promise<void>;
             /**
@@ -780,7 +839,11 @@ declare global {
             delete?: boolean;
             /**
              * Detox can start the app with additional launch arguments
-             * The added launchArgs will be passed through the launch command to the device and be accessible via [[NSProcessInfo processInfo] arguments]
+             *
+             * On iOS, the specified launchArgs will be passed through the launch command to the device and be accessible via `[[NSProcessInfo processInfo] arguments]`.
+             *
+             * On Android, they will be set as bundle-extra's into the activity's intent. They will therefore be accessible on the current activity using:
+             * `currentActivity.getIntent().getBundleExtra("launchArgs")`.
              */
             launchArgs?: any;
             /**

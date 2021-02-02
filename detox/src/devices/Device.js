@@ -19,6 +19,7 @@ class Device {
     this.deviceDriver = deviceDriver;
     this.deviceDriver.validateDeviceConfig(deviceConfig);
     this.debug = debug;
+    this._launchArgs = {};
   }
 
   async prepare() {
@@ -50,6 +51,7 @@ class Device {
 
     const baseLaunchArgs = {
       ...this._deviceConfig.launchArgs,
+      ...this._launchArgs,
       ...params.launchArgs,
     };
 
@@ -101,6 +103,29 @@ class Device {
     if(params.detoxUserActivityDataURL) {
       await this.deviceDriver.cleanupRandomDirectory(params.detoxUserActivityDataURL);
     }
+  }
+
+  setLaunchArg(name, value) {
+    if (value === undefined) {
+      this.clearLaunchArg(name);
+    } else {
+      this._launchArgs[name] = value;
+    }
+  }
+
+  setLaunchArgs(launchArgs) {
+    Object
+      .keys(launchArgs)
+      .forEach((name) =>
+        this.setLaunchArg(name, launchArgs[name]));
+  }
+
+  clearLaunchArg(name) {
+    delete this._launchArgs[name];
+  }
+
+  clearAllLaunchArgs() {
+    this._launchArgs = {};
   }
 
   get id() {
